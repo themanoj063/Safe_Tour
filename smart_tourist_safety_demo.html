@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Smart Tourist Safety Monitoring &amp; Incident Response System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mist:#e9eef4; --panel:#fbfcfe; --panel-2:#f0f3f8; --ink:#25225f; --ink-2:#52637b; --line:#d9e0ea;
+  --navy:#242e89; --on-navy:#ffffff; --signal:#ffc400; --on-signal:#0e2038;
+  --alarm:#e5392b; --alarm-bg:#fde9e6; --alarm-ink:#b3261a;
+  --amber:#f08a00; --amber-bg:#fff0d4; --amber-ink:#8f5200;
+  --safe:#1f9d5a; --safe-bg:#e1f4ea; --safe-ink:#146b3c;
+  --blue:#1d4ed8; --tour:#0f8b8d; --sos:#d92d20;
+  --land:#e4ece3; --land2:#d9e5d8; --contour:#bfcfbc; --water:#a8cfe3; --water2:#cde7f2;
+  --road:#ffffff; --road-edge:#c9d4cc; --tree:#7ea981; --label:#1b2e3f; --halo:#f1f6f2;
+  --float:rgba(251,252,254,.92); --shadow:0 8px 26px -14px rgba(14,32,56,.45);
+  --font-d:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --font-b:'Figtree','Segoe UI',system-ui,-apple-system,sans-serif;
+  --hdr:62px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --mist:#0a1423; --panel:#0f1c30; --panel-2:#16263f; --ink:#e8eef8; --ink-2:#9aaac1; --line:#23354f;
+  --navy:#5b8cff; --on-navy:#07142e;
+  --alarm:#ff5a4a; --alarm-bg:#3a1b1e; --alarm-ink:#ff9a8d;
+  --amber:#ffa62b; --amber-bg:#3a2a10; --amber-ink:#ffc069;
+  --safe:#3ccf85; --safe-bg:#12332a; --safe-ink:#86e6b3;
+  --blue:#7ba0ff; --tour:#3cc4c6;
+  --land:#14243a; --land2:#182b44; --contour:#25405e; --water:#1d4a6c; --water2:#27607f;
+  --road:#2d4465; --road-edge:#1a2c46; --tree:#2f5a4a; --label:#d5e1f1; --halo:#0a1423;
+  --float:rgba(15,28,48,.9); --shadow:0 8px 26px -14px rgba(0,0,0,.7);
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--mist);color:var(--ink);font:15px/1.5 var(--font-b);display:flex;flex-direction:column;min-height:100svh;-webkit-text-size-adjust:100%}
+h1,h2,h3,p,dl,dd{margin:0}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.i{width:18px;height:18px;flex:none}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:center;gap:20px;height:var(--hdr);padding:0 20px;background:var(--panel);border-bottom:1px solid var(--line);flex:none;position:relative;z-index:30}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto}
+.logo{width:36px;height:36px;flex:none}
+.brand h1{font:700 24px/1 var(--font-d);letter-spacing:.005em}
+.brand p{font-size:12.5px;color:var(--ink-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{position:relative;display:flex;padding:4px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;flex:none}
+.tab{position:relative;z-index:1;padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2);display:flex;gap:8px;align-items:center;white-space:nowrap;transition:color .2s}
+.tab[aria-selected=true]{color:var(--on-navy)}
+.tab-pill{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:999px;background:var(--navy);transition:transform .35s cubic-bezier(.3,1.15,.4,1),width .35s cubic-bezier(.3,1.15,.4,1)}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--signal);color:var(--on-signal);font-size:12px;font-weight:700;display:grid;place-items:center}
+.badge.pop{animation:pop .4s}
+.top-r{display:flex;align-items:center;gap:18px;flex:1 1 auto;justify-content:flex-end;min-width:0}
+.college{font-size:12.5px;color:var(--ink-2);text-align:right;line-height:1.3;max-width:260px}
+.live{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--safe);animation:ping 2s infinite}
+
+/* ---------- shell ---------- */
+main{flex:1;min-height:0;display:flex}
+.view{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) 410px;height:calc(100svh - var(--hdr))}
+.stage{position:relative;min-height:0;background:var(--land);overflow:hidden}
+.stage svg.map{position:absolute;inset:0;width:100%;height:100%;display:block}
+.panel{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;min-width:0}
+.panel-scroll{overflow:auto;min-height:0;flex:1}
+.float{position:absolute;z-index:4;background:var(--float);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+
+/* ---------- tourist app ---------- */
+.status{top:16px;left:16px;display:flex;gap:12px;align-items:center;padding:9px 18px 9px 9px;max-width:min(470px,calc(100% - 32px));transition:background .3s,border-color .3s}
+.status .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--panel-2);color:var(--navy);flex:none;transition:background .3s,color .3s}
+.status .ico .i{width:22px;height:22px}
+.status b{display:block;font:600 20px/1.1 var(--font-d)}
+.status span{display:block;font-size:13px;color:var(--ink-2);line-height:1.3;margin-top:1px}
+.status[data-s=safe]{border-color:var(--safe)}
+.status[data-s=safe] .ico{background:var(--safe);color:#fff}
+.status[data-s=warn]{border-color:var(--alarm);background:var(--alarm-bg)}
+.status[data-s=warn] .ico{background:var(--alarm);color:#fff}
+.walk{position:absolute;left:16px;bottom:16px;z-index:4;display:inline-flex;align-items:center;gap:12px;padding:8px 22px 8px 8px;border-radius:999px;background:var(--signal);color:var(--on-signal);font-weight:700;font-size:15px;box-shadow:0 12px 26px -12px rgba(14,32,56,.7);transition:transform .15s}
+.walk:active{transform:scale(.97)}
+.walk .ic{width:36px;height:36px;border-radius:50%;background:#0e2038;color:var(--signal);display:grid;place-items:center}
+.walk[aria-pressed=true]{background:var(--float);color:var(--ink);box-shadow:inset 0 0 0 2px var(--signal),var(--shadow)}
+.walk[aria-pressed=true] .ic{background:var(--signal);color:#0e2038}
+.walk.hint::after{content:"";position:absolute;inset:-5px;border-radius:999px;border:2px solid var(--signal);animation:hint 2s ease-out infinite;pointer-events:none}
+.legend{right:16px;bottom:16px;padding:10px 14px;display:grid;gap:6px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:8px}
+.sw{width:14px;height:14px;border-radius:50%;flex:none}
+.sw.r{border:2px dashed var(--alarm);background:rgba(229,57,43,.18)}
+.sw.s{border:2px dashed var(--safe);background:rgba(31,157,90,.18)}
+.sw.me{background:var(--blue);border:2.5px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.sw.t{background:var(--tour);border:2.5px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.sw.u{border-radius:4px;background:var(--navy)}
+.stage.alarm::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;box-shadow:inset 0 0 0 4px var(--alarm),inset 0 0 70px rgba(229,57,43,.45);animation:alarm 1.5s ease-out forwards}
+
+.pad{padding:22px 24px 26px}
+.who{display:flex;align-items:center;gap:14px}
+.av{width:48px;height:48px;border-radius:50%;background:var(--av,var(--navy));color:#fff;display:grid;place-items:center;font:600 24px/1 var(--font-d);position:relative;flex:none}
+.who h2{font:600 28px/1 var(--font-d)}
+.who small{display:block;color:var(--ink-2);font-size:13px;margin-top:3px}
+.sharing{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--safe-ink);background:var(--safe-bg);padding:5px 11px;border-radius:999px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap}
+.sharing i{width:7px;height:7px;border-radius:50%;background:var(--safe);animation:ping 2s infinite}
+.sos{width:100%;display:flex;align-items:center;gap:16px;padding:16px 18px;margin-top:22px;border-radius:18px;background:var(--sos);color:#fff;text-align:left;position:relative;overflow:hidden;box-shadow:0 16px 28px -18px var(--sos);transition:transform .12s}
+.sos:active{transform:scale(.985)}
+.sos .disc{width:58px;height:58px;border-radius:50%;background:#fff;color:var(--sos);display:grid;place-items:center;font:700 27px/1 var(--font-d);letter-spacing:.02em;position:relative;flex:none}
+.sos .disc::before,.sos .disc::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.85);animation:ripple 2.6s ease-out infinite}
+.sos .disc::after{animation-delay:1.3s}
+.sos b{display:block;font:600 25px/1.05 var(--font-d)}
+.sos small{display:block;font-size:13px;opacity:.92;margin-top:3px;line-height:1.3}
+.facts{margin-top:22px;border-top:1px solid var(--line)}
+.facts div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.facts dt{color:var(--ink-2);font-size:14px}
+.facts dd{font-weight:600;text-align:right;font-size:14.5px;display:flex;align-items:center;gap:8px}
+.risk{display:inline-flex;gap:3px}
+.risk i{width:16px;height:6px;border-radius:3px;background:var(--line)}
+.risk[data-lv="1"] i:nth-child(1){background:var(--safe)}
+.risk[data-lv="2"] i:nth-child(-n+2){background:var(--amber)}
+.risk[data-lv="3"] i{background:var(--alarm)}
+.sec-h{font:600 24px/1 var(--font-d);margin:26px 0 6px}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:10px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.35;animation:slide .35s}
+.feed li i{width:8px;height:8px;border-radius:50%;background:var(--ink-2);margin-top:6px}
+.feed .k-danger i{background:var(--alarm)}
+.feed .k-warn i{background:var(--amber)}
+.feed .k-ok i{background:var(--safe)}
+.feed time{display:block;font-size:12px;color:var(--ink-2);margin-top:1px;font-variant-numeric:tabular-nums}
+
+/* ---------- dashboard ---------- */
+.kpis{top:16px;left:16px;display:flex;max-width:calc(100% - 32px);overflow:hidden}
+.kpi{padding:10px 18px 12px;text-align:left;position:relative;min-width:88px;border-right:1px solid var(--line);transition:background .15s}
+.kpi:last-child{border-right:0}
+button.kpi:hover{background:var(--panel-2)}
+.kpi b{display:block;font:600 36px/1 var(--font-d);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.kpi::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:2px;background:transparent;transition:background .2s}
+.kpi.on::after{background:var(--signal)}
+.kpi[data-k=Open] b{color:var(--alarm)}
+.kpi[data-k=Responding] b{color:var(--amber)}
+.kpi[data-k=Resolved] b{color:var(--safe)}
+.layers{left:16px;bottom:16px;display:flex;gap:4px;padding:5px;align-items:center;flex-wrap:wrap;max-width:calc(100% - 200px)}
+.lay{padding:7px 12px;border-radius:10px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.lay[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.layers .sep{width:1px;height:20px;background:var(--line);margin:0 4px}
+.lay.reset{display:inline-flex;align-items:center;gap:6px}
+.lay.reset .i{width:15px;height:15px}
+.tip{position:absolute;z-index:6;pointer-events:none;min-width:160px;max-width:240px;padding:10px 12px;border-radius:12px;background:var(--ink);color:var(--panel);font-size:12.5px;line-height:1.35;box-shadow:0 14px 30px -12px rgba(0,0,0,.55);opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s}
+.tip.on{opacity:1;transform:none}
+.tip b{display:block;font:600 18px/1.1 var(--font-d);margin-bottom:3px}
+.tip small{display:block;opacity:.8;font-size:12.5px}
+.tip .hot{color:#ffb3a8;opacity:1}
+
+.ptabs{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--line);flex:none}
+.ptab{padding:15px 12px 12px;font-weight:600;color:var(--ink-2);border-bottom:3px solid transparent;margin-bottom:-1px;display:inline-flex;gap:8px;align-items:center}
+.ptab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--signal)}
+.ptab em{font-style:normal;font-size:12px;font-weight:700;background:var(--panel-2);border-radius:999px;padding:1px 8px;min-width:22px;text-align:center}
+.ptab em.hot{background:var(--alarm);color:#fff}
+.ptools{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex:none;align-items:center;flex-wrap:wrap}
+.ptools p{font-size:12.5px;color:var(--ink-2);flex:1 1 100%;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600;font-size:13.5px;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--ink-2)}
+.btn .i{width:16px;height:16px}
+.btn.solid{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.btn.signal{background:var(--signal);border-color:var(--signal);color:var(--on-signal)}
+.pane{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.filters{display:flex;gap:6px;padding:12px 14px;flex-wrap:wrap;flex:none}
+.flt{padding:5px 12px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2)}
+.flt b{font-weight:700;margin-left:5px}
+.flt[aria-pressed=true]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.empty{padding:34px 24px;color:var(--ink-2);text-align:center;font-size:14px}
+.empty b{display:block;font:600 22px/1.1 var(--font-d);color:var(--ink);margin-bottom:6px}
+.inc-list{list-style:none;margin:0;padding:0}
+.inc{position:relative;border-bottom:1px solid var(--line);--pc:var(--signal)}
+.inc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pc)}
+.inc.p-Critical{--pc:var(--alarm)}
+.inc.p-High{--pc:var(--amber)}
+.inc.sel{background:var(--panel-2)}
+.inc.fresh{animation:fresh 1.8s ease-out}
+.inc-head{display:flex;gap:10px;align-items:center;padding:13px 14px 13px 20px}
+.inc-main{flex:1;min-width:0;text-align:left;display:block}
+.inc-main b{display:block;font:600 21px/1.05 var(--font-d)}
+.inc-main b span{font:500 14px var(--font-d);color:var(--ink-2);margin-left:6px;font-variant-numeric:tabular-nums}
+.inc-main small{display:block;font-size:13px;color:var(--ink-2);margin-top:3px}
+.pill{padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;border:1px solid transparent;white-space:nowrap}
+.pill.Open{background:var(--alarm-bg);color:var(--alarm-ink)}
+.pill.Responding{background:var(--amber-bg);color:var(--amber-ink)}
+.pill.Resolved{background:var(--safe-bg);color:var(--safe-ink)}
+button.pill:hover:not(:disabled){border-color:currentColor}
+.pill:disabled{cursor:default}
+.inc-detail{padding:2px 16px 18px 20px}
+.inc-detail.enter{animation:expand .3s ease-out}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin:4px 0 4px}
+.meta dt{font-size:12px;color:var(--ink-2)}
+.meta dd{font-weight:600;font-size:14px;margin-top:1px}
+.steps{list-style:none;display:flex;margin:18px 0 16px;padding:0}
+.steps li{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2);position:relative}
+.steps li i{width:14px;height:14px;border-radius:50%;background:var(--panel);border:2px solid var(--line);z-index:1}
+.steps li::before{content:"";position:absolute;top:6px;right:50%;left:-50%;height:2px;background:var(--line)}
+.steps li:first-child::before{display:none}
+.steps li.done i,.steps li.cur i{border-color:var(--navy);background:var(--navy)}
+.steps li.done::before,.steps li.cur::before{background:var(--navy)}
+.steps li.cur{color:var(--ink)}
+.sub-h{font:600 18px/1 var(--font-d);margin:6px 0 10px}
+.units{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.unit-btn{position:relative;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;color:var(--ink-2);transition:border-color .15s}
+.unit-btn .ui{width:32px;height:32px;border-radius:10px;background:var(--uc);color:#fff;display:grid;place-items:center;margin-bottom:4px}
+.unit-btn b{font:600 16px/1.1 var(--font-d);color:var(--ink)}
+.unit-btn:hover:not(:disabled){border-color:var(--uc)}
+.unit-btn:disabled{opacity:.55;cursor:not-allowed}
+.unit-btn.mine:disabled{opacity:1;border-color:var(--uc)}
+.unit-btn .sug{position:absolute;top:-8px;right:6px;font-size:11px;font-weight:700;background:var(--signal);color:var(--on-signal);padding:1px 8px;border-radius:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tl{list-style:none;margin:16px 0 0;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.tl li{position:relative;padding:0 0 10px 12px;font-size:13.5px;line-height:1.35}
+.tl li::before{content:"";position:absolute;left:-20px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--navy)}
+.tl time{display:block;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.roster{list-style:none;margin:0;padding:0}
+.r-row{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;transition:background .15s}
+.r-row:hover,.r-row.sel{background:var(--panel-2)}
+.r-row .av{width:40px;height:40px;font-size:20px}
+.av[data-st]::after{content:"";position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;border:2px solid var(--panel);background:var(--safe)}
+.av[data-st=bad]::after{background:var(--alarm)}
+.av[data-st=warn]::after{background:var(--amber)}
+.r-main{flex:1;min-width:0}
+.r-main b{display:block;font:600 20px/1.05 var(--font-d)}
+.r-main small{display:block;color:var(--ink-2);font-size:13px;margin-top:2px}
+.r-end{text-align:right;font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.bat{display:inline-block;width:26px;height:12px;border:2px solid var(--ink-2);border-radius:3px;padding:1px;position:relative}
+.bat::after{content:"";position:absolute;right:-5px;top:2px;width:3px;height:4px;background:var(--ink-2);border-radius:0 1px 1px 0}
+.bat i{display:block;height:100%;background:var(--safe);border-radius:1px}
+.bat.low{border-color:var(--alarm)}
+.bat.low i{background:var(--alarm)}
+.pane .feed{padding:2px 16px 20px}
+
+/* ---------- map drawing ---------- */
+.m-land{fill:var(--land)}
+.m-patch{fill:var(--land2)}
+.contour{fill:none;stroke:var(--contour);stroke-width:1.1}
+.hill{fill:var(--land2);stroke:var(--contour);stroke-width:1.1}
+.river{fill:none;stroke:var(--water);stroke-width:17;stroke-linecap:round}
+.river2{fill:none;stroke:var(--water2);stroke-width:7;stroke-linecap:round}
+.road-edge{fill:none;stroke:var(--road-edge);stroke-width:7;stroke-linecap:round}
+.road{fill:none;stroke:var(--road);stroke-width:4.6;stroke-linecap:round}
+.tree{fill:var(--tree);opacity:.8}
+.tree.faint{opacity:.45}
+.wave{fill:none;stroke:var(--water2);stroke-width:1.8;stroke-linecap:round}
+.bld{fill:var(--road-edge)}
+.fountain{fill:var(--water);stroke:var(--road);stroke-width:2}
+.terrain *{pointer-events:none}
+.zone{cursor:pointer;stroke-width:2;stroke-dasharray:7 5;transition:fill-opacity .2s}
+.zone.r{fill:var(--alarm);fill-opacity:.1;stroke:var(--alarm)}
+.zone.s{fill:var(--safe);fill-opacity:.14;stroke:var(--safe)}
+.zone:hover{fill-opacity:.22}
+.hatch-fill{pointer-events:none}
+.hatch-line{stroke:var(--alarm);opacity:.3}
+.zlabel{font:700 11.5px var(--font-b);fill:var(--label);paint-order:stroke;stroke:var(--halo);stroke-width:3.5px;stroke-linejoin:round;text-anchor:middle;pointer-events:none}
+.zlabel.sub{font-size:9.5px;font-weight:600}
+.zlabel.sub.r{fill:var(--alarm-ink)}
+.zlabel.sub.s{fill:var(--safe-ink)}
+.zlabel.small{font-size:9.5px;font-weight:600}
+.base-ring{fill:var(--panel);fill-opacity:.55;stroke:var(--ink-2);stroke-width:1.2;stroke-dasharray:2 3;pointer-events:none}
+.t-marker{cursor:pointer}
+.t-dot{fill:var(--tour);stroke:#fff;stroke-width:3}
+.t-marker.me .t-dot{fill:var(--blue)}
+.t-marker.bad .t-dot{fill:var(--alarm)}
+.t-marker.warn .t-dot{fill:var(--amber)}
+.t-marker .pulse{fill:var(--alarm);opacity:0;transform-box:fill-box;transform-origin:center}
+.t-marker.bad .pulse{animation:mpulse 1.5s ease-out infinite}
+.t-marker.warn .pulse{fill:var(--amber);animation:mpulse 2.2s ease-out infinite}
+.t-marker.alerted .pulse{fill:var(--blue);animation:mpulse 1s ease-out infinite}
+.t-label{font:600 11px var(--font-b);fill:var(--label);paint-order:stroke;stroke:var(--halo);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.trail{fill:none;stroke:var(--tour);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.5}
+.trail.me{stroke:var(--blue);opacity:.75}
+.route{fill:none;stroke:var(--blue);stroke-width:1.8;stroke-dasharray:2 6;stroke-linecap:round;opacity:.5;pointer-events:none}
+.unit{cursor:pointer}
+.unit-box{stroke:#fff;stroke-width:2}
+.unit.moving .unit-box{filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.link{stroke:var(--ink);stroke-width:1.6;stroke-dasharray:5 5;opacity:.6;animation:dash 1s linear infinite;pointer-events:none}
+.sel-ring{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-dasharray:5 4;transform-box:fill-box;transform-origin:center;animation:spin 8s linear infinite;pointer-events:none}
+.bcast{fill:var(--blue);fill-opacity:.12;stroke:var(--blue);stroke-width:2;pointer-events:none}
+.no-zones .zone-layer,.no-tourists .tourist-layer,.no-units .unit-layer,.no-trails .trail-layer{display:none}
+
+/* ---------- toasts and dialog ---------- */
+#toasts{position:fixed;right:18px;bottom:18px;z-index:100;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:14px;background:var(--ink);color:var(--panel);font-size:14px;box-shadow:0 18px 40px -16px rgba(0,0,0,.6);max-width:min(400px,calc(100vw - 36px));animation:toastIn .35s cubic-bezier(.2,1.2,.4,1)}
+.toast.out{opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s}
+.toast .i{width:19px;height:19px}
+.toast.danger .i{color:#ff8c78}
+.toast.ok .i{color:#53c98a}
+.toast.warn .i{color:#e08b00}
+.toast button{margin-left:4px;border-radius:8px;padding:4px 11px;font-weight:700;font-size:13px;background:var(--panel);color:var(--ink);white-space:nowrap}
+dialog{border:0;padding:0;border-radius:24px;background:var(--panel);color:var(--ink);width:min(430px,calc(100vw - 32px));box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}
+dialog::backdrop{background:rgba(8,16,30,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+dialog[open]{animation:dlg .35s cubic-bezier(.2,1.2,.4,1)}
+.dlg{padding:28px}
+.dlg-ico{width:60px;height:60px;border-radius:50%;background:var(--sos);color:#fff;display:grid;place-items:center;margin-bottom:16px}
+.dlg-ico .i{width:28px;height:28px}
+.dlg h2{font:600 34px/1 var(--font-d)}
+.dlg p{color:var(--ink-2);margin-top:8px;font-size:14.5px}
+.dlg p b{color:var(--ink)}
+.checks{list-style:none;padding:0;margin:20px 0 22px;display:grid;gap:12px}
+.checks li{display:flex;gap:12px;align-items:center;opacity:0;transform:translateX(-8px);animation:inx .4s forwards;font-size:14.5px}
+.checks li:nth-child(2){animation-delay:.45s}
+.checks li:nth-child(3){animation-delay:.9s}
+.checks .i{width:22px;height:22px;padding:3px;border-radius:50%;background:var(--safe);color:#fff}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end}
+
+@keyframes pop{40%{transform:scale(1.35)}}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(31,157,90,.55)}80%,100%{box-shadow:0 0 0 7px rgba(31,157,90,0)}}
+@keyframes ripple{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.1);opacity:0}}
+@keyframes hint{0%{transform:scale(.96);opacity:.9}100%{transform:scale(1.14);opacity:0}}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}}
+@keyframes mpulse{0%{transform:scale(.8);opacity:.55}100%{transform:scale(3.2);opacity:0}}
+@keyframes dash{to{stroke-dashoffset:-20}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes alarm{0%{opacity:1}100%{opacity:0}}
+@keyframes fresh{0%,30%{background:var(--amber-bg)}100%{background:transparent}}
+@keyframes expand{from{opacity:0;transform:translateY(-6px)}}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px) scale(.96)}}
+@keyframes dlg{from{opacity:0;transform:translateY(16px) scale(.96)}}
+@keyframes inx{to{opacity:1;transform:none}}
+
+/* ---------- small screens ---------- */
+@media (max-width:1100px){.college{display:none}}
+@media (max-width:900px){
+  body{display:block}
+  .top{height:auto;flex-wrap:wrap;padding:10px 14px;gap:10px}
+  .brand{flex:1 1 100%}
+  .top-r{display:none}
+  .tabs{width:100%}
+  .tab{flex:1;justify-content:center;padding:9px 10px}
+  main{display:block}
+  .view{display:block;height:auto}
+  .stage{height:min(66svh,580px);min-height:400px}
+  .panel{border-left:0;border-top:1px solid var(--line)}
+  .panel-scroll,.pane{overflow:visible}
+  .pane{max-height:none}
+  .kpi{min-width:0;flex:1;padding:8px 8px 10px}
+  .kpi b{font-size:28px}
+  .kpi span{font-size:11.5px}
+  .layers{max-width:calc(100% - 32px);bottom:70px}
+  .legend{display:none}
+  .walk{bottom:16px}
+}
+@media (max-width:520px){
+  .brand p{display:none}
+  .kpi span{white-space:normal}
+  .units{grid-template-columns:1fr}
+  .unit-btn{flex-direction:row;justify-content:flex-start;text-align:left;gap:10px;padding:10px 12px}
+  .unit-btn .ui{margin:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 1 0-14 0C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></g></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.8 19.5h18.4L12 3.5Z"/><path d="M12 10v4.5M12 17.4v.1"/></g></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-5M12 3 6.5 11h3L5.5 16h13l-4-5h3L12 3Z"/></g></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15L6 16ZM10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<header class="top">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 34 8.5v10.2c0 8.3-5.6 14.4-14 18.3C11.6 33.1 6 27 6 18.7V8.5Z" fill="var(--navy)"/><path d="M20 11.5a5.6 5.6 0 0 0-5.6 5.6c0 4.2 5.6 9.9 5.6 9.9s5.6-5.7 5.6-9.9A5.6 5.6 0 0 0 20 11.5Z" fill="var(--panel)"/><circle cx="20" cy="17" r="2.3" fill="#ffc400"/></svg>
+    <div>
+      <h1>Smart Tourist Safety</h1>
+      <p>Monitoring &amp; Incident Response System</p>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <span class="tab-pill" aria-hidden="true"></span>
+    <button class="tab" role="tab" id="tab-app" aria-selected="true" aria-controls="view-app">Tourist App</button>
+    <button class="tab" role="tab" id="tab-dash" aria-selected="false" aria-controls="view-dash">Authority Dashboard <span class="badge" id="badge" hidden>0</span></button>
+  </nav>
+  <div class="top-r">
+    <span class="college">Hindusthan College of Engineering and Technology, mini project demo</span>
+    <span class="live"><i></i><time id="clock" class="num">--:--:--</time></span>
+  </div>
+</header>
+
+<main>
+<!-- ================= TOURIST APP ================= -->
+<section id="view-app" class="view" role="tabpanel" aria-labelledby="tab-app">
+  <div class="stage" id="stage1">
+    <svg class="map" id="map1" viewBox="-40 -70 680 540" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Live map showing the tourist, restricted zones and safe zones"></svg>
+    <div class="float status" id="status" data-s="neutral" role="status">
+      <div class="ico"><svg class="i"><use id="statusIco" href="#i-pin"/></svg></div>
+      <div><b id="statusT">Location sharing is on</b><span id="statusS">Starting up</span></div>
+    </div>
+    <button class="walk hint" id="walk" aria-pressed="false">
+      <span class="ic"><svg class="i"><use id="walkIc" href="#i-play"/></svg></span>
+      <span id="walkTxt">Start auto walk</span>
+    </button>
+    <div class="float legend" aria-label="Map legend">
+      <span><i class="sw me"></i>You</span>
+      <span><i class="sw s"></i>Safe zone</span>
+      <span><i class="sw r"></i>Restricted zone</span>
+      <span><i class="sw u"></i>Help point</span>
+    </div>
+  </div>
+  <aside class="panel">
+    <div class="panel-scroll"><div class="pad">
+      <div class="who">
+        <div class="av" aria-hidden="true">B</div>
+        <div><h2>Boomiga</h2><small>Tourist ID T-001</small></div>
+        <span class="sharing"><i></i>Sharing live</span>
+      </div>
+      <button class="sos" id="sosBtn">
+        <span class="disc">SOS</span>
+        <span><b>Emergency help</b><small>Alerts the control room with your live location</small></span>
+      </button>
+      <dl class="facts">
+        <div><dt>Risk level</dt><dd><span class="risk" id="risk" data-lv="1"><i></i><i></i><i></i></span><span id="riskTxt">Low</span></dd></div>
+        <div><dt>Nearest help</dt><dd id="help">Medical Camp</dd></div>
+        <div><dt>Distance walked</dt><dd id="walked" class="num">0 m</dd></div>
+        <div><dt>Phone battery</dt><dd id="batt" class="num">86%</dd></div>
+      </dl>
+      <h3 class="sec-h">Trip log</h3>
+      <ul class="feed" id="appFeed"></ul>
+    </div></div>
+  </aside>
+</section>
+
+<!-- ================= AUTHORITY DASHBOARD ================= -->
+<section id="view-dash" class="view" role="tabpanel" aria-labelledby="tab-dash" hidden>
+  <div class="stage" id="stage2">
+    <svg class="map" id="map2" viewBox="-40 -70 680 540" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Operations map with every tourist, zone and response unit"></svg>
+    <div class="float kpis" id="kpis">
+      <button class="kpi" data-k="people"><b id="k-people">0</b><span>Tourists live</span></button>
+      <button class="kpi" data-k="Open"><b id="k-Open">0</b><span>Open</span></button>
+      <button class="kpi" data-k="Responding"><b id="k-Responding">0</b><span>Responding</span></button>
+      <button class="kpi" data-k="Resolved"><b id="k-Resolved">0</b><span>Resolved</span></button>
+      <div class="kpi"><b id="k-avg" class="num">-</b><span>Avg. arrival</span></div>
+    </div>
+    <div class="float layers" role="group" aria-label="Map layers">
+      <button class="lay" data-l="zones" aria-pressed="true">Zones</button>
+      <button class="lay" data-l="tourists" aria-pressed="true">Tourists</button>
+      <button class="lay" data-l="units" aria-pressed="true">Responders</button>
+      <button class="lay" data-l="trails" aria-pressed="true">Trails</button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="lay reset" id="resetView"><svg class="i"><use href="#i-fit"/></svg>Fit map</button>
+    </div>
+    <div class="float legend" aria-label="Map legend">
+      <span><i class="sw t"></i>Tourist</span>
+      <span><i class="sw s"></i>Safe zone</span>
+      <span><i class="sw r"></i>Restricted zone</span>
+      <span><i class="sw u"></i>Response unit</span>
+    </div>
+    <div class="tip" id="tip" role="status"></div>
+  </div>
+  <aside class="panel">
+    <div class="ptabs" role="tablist" aria-label="Dashboard panels">
+      <button class="ptab" role="tab" data-p="inc" aria-selected="true">Incidents <em id="pc-inc">0</em></button>
+      <button class="ptab" role="tab" data-p="tour" aria-selected="false">Tourists <em id="pc-tour">0</em></button>
+      <button class="ptab" role="tab" data-p="feed" aria-selected="false">Activity</button>
+    </div>
+    <div class="ptools">
+      <button class="btn solid" id="simBtn"><svg class="i"><use href="#i-bolt"/></svg>Simulate incident</button>
+      <button class="btn" id="resetDemo"><svg class="i"><use href="#i-reset"/></svg>Reset demo</button>
+    </div>
+    <div class="pane" id="pane-inc">
+      <div class="filters" id="filters" role="group" aria-label="Filter incidents">
+        <button class="flt" data-f="all" aria-pressed="true">All<b>0</b></button>
+        <button class="flt" data-f="Open" aria-pressed="false">Open<b>0</b></button>
+        <button class="flt" data-f="Responding" aria-pressed="false">Responding<b>0</b></button>
+        <button class="flt" data-f="Resolved" aria-pressed="false">Resolved<b>0</b></button>
+      </div>
+      <ul class="inc-list" id="incList"></ul>
+      <div class="empty" id="incEmpty"></div>
+    </div>
+    <div class="pane" id="pane-tour" hidden><ul class="roster" id="roster"></ul></div>
+    <div class="pane" id="pane-feed" hidden><ul class="feed" id="opsFeed"></ul></div>
+  </aside>
+</section>
+</main>
+
+<div id="toasts" aria-live="polite"></div>
+
+<dialog id="sosDlg" aria-labelledby="sosT">
+  <div class="dlg">
+    <div class="dlg-ico"><svg class="i"><use href="#i-bell"/></svg></div>
+    <h2 id="sosT">SOS sent</h2>
+    <p id="sosMsg">Incident <b id="sosId"></b> was raised from <b class="num" id="sosGps"></b>.</p>
+    <ul class="checks">
+      <li><svg class="i"><use href="#i-check"/></svg>Live location shared with the control room</li>
+      <li><svg class="i"><use href="#i-check"/></svg>Nearest response unit notified</li>
+      <li><svg class="i"><use href="#i-check"/></svg>Emergency contacts alerted</li>
+    </ul>
+    <div class="dlg-actions">
+      <button class="btn" id="sosClose">Close</button>
+      <button class="btn signal" id="sosGo">Open in dashboard</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(()=>{
+'use strict';
+const NS='http://www.w3.org/2000/svg',W=600,H=400,VX=-40,VY=-70,VW=680,VH=540;
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mk=(tag,at,parent)=>{const e=document.createElementNS(NS,tag);for(const k in at)e.setAttribute(k,at[k]);if(parent)parent.appendChild(e);return e};
+const rng=seed=>{let s=seed>>>0;return()=>((s=(s*1664525+1013904223)>>>0)/4294967296)};
+const M_PER=2, ETA_K=.24, WALK_SPEED=48, UNIT_SPEED=95, BCAST_R=140;
+const fmtDist=u=>{const m=u*M_PER;return m<1000?Math.round(m)+' m':(m/1000).toFixed(2)+' km'};
+const gps=p=>`${(11.0285+(H-p.y)*0.000018).toFixed(5)}° N, ${(76.961+p.x*0.0000183).toFixed(5)}° E`;
+const fmtClock=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const fmtMS=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const ago=t=>{const s=(Date.now()-t)/1000;return s<5?'just now':s<60?Math.floor(s)+'s ago':s<3600?Math.floor(s/60)+'m ago':Math.floor(s/3600)+'h ago'};
+
+/* ---------------- data ---------------- */
+const ZONES=[
+  {id:'plaza',name:'Tourist Plaza',x:300,y:200,r:68,restricted:false,note:'Visitor desk and first-aid point'},
+  {id:'forest',name:'Forest Trail',x:150,y:118,r:66,restricted:true,note:'Dense forest, wildlife movement reported'},
+  {id:'flood',name:'Flood Zone',x:440,y:272,r:76,restricted:true,note:'Low river bank, water level rising'},
+  {id:'fort',name:'Heritage Fort',x:500,y:92,r:54,restricted:false,note:'Guided tours until 6 pm'}
+];
+const UNITS=[
+  {id:'P-1',type:'police',label:'Police unit P-1',short:'Police',base:'Police Post',icon:'i-shield',color:'#2457c5',home:{x:80,y:338}},
+  {id:'M-1',type:'medical',label:'Ambulance M-1',short:'Ambulance',base:'Medical Camp',icon:'i-plus',color:'#d92d20',home:{x:310,y:312}},
+  {id:'G-1',type:'guard',label:'Forest guard G-1',short:'Forest guard',base:'Guard Station',icon:'i-tree',color:'#1f8a4c',home:{x:238,y:46}}
+];
+UNITS.forEach(u=>{u.x=u.home.x;u.y=u.home.y;u.state='idle';u.inc=null});
+const TOURISTS=[
+  {id:'T-001',name:'Boomiga',x:300,y:200,battery:86,me:true},
+  {id:'T-102',name:'Arjun',x:80,y:285,vx:11,vy:-6,battery:64},
+  {id:'T-045',name:'Meera',x:520,y:150,vx:-9,vy:7,battery:19},
+  {id:'T-077',name:'Kavin',x:340,y:350,vx:6,vy:-10,battery:72},
+  {id:'T-018',name:'Divya',x:210,y:250,vx:12,vy:5,battery:41},
+  {id:'T-063',name:'Rahul',x:400,y:60,vx:-8,vy:6,battery:93}
+];
+TOURISTS.forEach(t=>{t.trail=[];t.alertUntil=0});
+const me=TOURISTS[0];
+const PRIORITY={'SOS Alert':'Critical','Medical Emergency':'Critical','Zone Breach':'High','No Movement':'Medium'};
+const SUGGEST={'SOS Alert':'P-1','Medical Emergency':'M-1','Zone Breach':'G-1','No Movement':'G-1'};
+const DESC={'SOS Alert':'SOS button pressed by the tourist','Zone Breach':'Tourist entered a restricted zone','Medical Emergency':'Fall detected, no response from the tourist','No Movement':'No movement detected for over 10 minutes'};
+const AVC=['#0d2f6b','#0f8b8d','#7b3fa0','#b4570a','#1f8a4c','#a02c5b'];
+
+/* ---------------- walking route (closed spline) ---------------- */
+const ROUTE_PTS=[[300,200],[230,160],[150,118],[100,140],[120,235],[210,290],[310,300],[400,290],[470,250],[505,170],[500,95],[400,125]];
+const ROUTE=(()=>{
+  const pts=[],n=ROUTE_PTS.length;
+  for(let i=0;i<n;i++){
+    const p0=ROUTE_PTS[(i-1+n)%n],p1=ROUTE_PTS[i],p2=ROUTE_PTS[(i+1)%n],p3=ROUTE_PTS[(i+2)%n];
+    for(let k=0;k<16;k++){
+      const t=k/16,t2=t*t,t3=t2*t;
+      const f=(a,b,c,d)=>.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);
+      pts.push({x:f(p0[0],p1[0],p2[0],p3[0]),y:f(p0[1],p1[1],p2[1],p3[1])});
+    }
+  }
+  let acc=0;pts.forEach((p,i)=>{if(i)acc+=dist(p,pts[i-1]);p.s=acc});
+  return {pts,total:acc+dist(pts[pts.length-1],pts[0])};
+})();
+function routeAt(s){
+  const L=ROUTE.total,P=ROUTE.pts;s=((s%L)+L)%L;
+  let lo=0,hi=P.length-1;
+  while(lo<hi){const mid=(lo+hi+1)>>1;if(P[mid].s<=s)lo=mid;else hi=mid-1}
+  const a=P[lo],b=P[(lo+1)%P.length],end=lo===P.length-1?L:b.s,span=end-a.s||1,k=(s-a.s)/span;
+  return {x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k};
+}
+
+/* ---------------- state ---------------- */
+const state={tab:'app',pane:'inc',filter:'all',sel:null,justSel:null,follow:null,walking:false,walkS:0,dist:0,zone:null};
+const incidents=[];let seq=1040;
+const pulses=[];
+const view={x:VX,y:VY,w:VW,h:VH},vt={x:VX,y:VY,w:VW,h:VH};
+const byId=id=>TOURISTS.find(t=>t.id===id);
+const incById=id=>incidents.find(i=>i.id===id);
+const activeInc=id=>incidents.find(i=>i.who===id&&i.status!=='Resolved');
+const zoneAt=p=>ZONES.find(z=>Math.hypot(p.x-z.x,p.y-z.y)<=z.r)||null;
+const counts=()=>{const c={Open:0,Responding:0,Resolved:0};incidents.forEach(i=>c[i.status]++);return c};
+
+/* ---------------- map drawing ---------------- */
+function blob(cx,cy,rx,ry,seed){
+  const r=rng(seed),n=14,pts=[];
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,k=1+(r()-.5)*.28;pts.push([cx+Math.cos(a)*rx*k,cy+Math.sin(a)*ry*k])}
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2],f=v=>v.toFixed(1);
+  const m0=mid(pts[n-1],pts[0]);let d=`M${f(m0[0])} ${f(m0[1])}`;
+  for(let i=0;i<n;i++){const p=pts[i],m=mid(p,pts[(i+1)%n]);d+=`Q${f(p[0])} ${f(p[1])} ${f(m[0])} ${f(m[1])}`}
+  return d+'Z';
+}
+const RIVER='M650 205C590 215 560 245 520 258S440 285 400 305S330 360 290 440S250 520 240 560';
+const ROADS=[
+  'M300 200C255 175 200 150 150 118','M300 200C370 160 440 130 500 92','M300 200C350 235 400 262 440 272',
+  'M300 200L300 312','M300 200C225 262 150 310 80 338','M150 118C190 82 218 62 238 46',
+  'M80 338C60 380 20 430 -30 470','M500 92C560 60 620 40 700 30'
+];
+function buildMap(svg,full,key){
+  const m={svg,full,key,markers:{},units:{},trails:{}};
+  const defs=mk('defs',{},svg);
+  const pat=mk('pattern',{id:'hatch-'+key,width:9,height:9,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+  mk('line',{x1:0,y1:0,x2:0,y2:9,class:'hatch-line','stroke-width':2.4},pat);
+  const T=mk('g',{class:'terrain'},svg);
+  mk('rect',{x:-400,y:-300,width:1400,height:1100,class:'m-land'},T);
+  [[60,40,110,60,3],[330,130,130,70,5],[560,340,110,60,9],[210,360,120,45,11],[-80,200,90,120,13],[690,200,80,120,17]].forEach(([x,y,rx,ry,s])=>mk('path',{d:blob(x,y,rx,ry,s),class:'m-patch'},T));
+  [[505,92,[150,118,88,58],21],[92,335,[115,84,54,26],33]].forEach(([cx,cy,rs,seed])=>rs.forEach((r,i)=>mk('path',{d:blob(cx,cy,r*1.15,r*.85,seed+i),class:i===rs.length-1?'hill':'contour'},T)));
+  mk('path',{d:RIVER,class:'river'},T);mk('path',{d:RIVER,class:'river2'},T);
+  ROADS.forEach(d=>{mk('path',{d,class:'road-edge'},T);mk('path',{d,class:'road'},T)});
+  const rf=rng(7),fz=ZONES[1];
+  for(let i=0;i<58;i++){const a=rf()*6.283,rr=Math.sqrt(rf())*(fz.r-6);mk('circle',{cx:(fz.x+Math.cos(a)*rr).toFixed(1),cy:(fz.y+Math.sin(a)*rr).toFixed(1),r:(2.8+rf()*2.6).toFixed(1),class:'tree'},T)}
+  const rs=rng(19);
+  for(let i=0;i<50;i++){const x=-60+rs()*720,y=-50+rs()*500;if(ZONES.some(z=>Math.hypot(x-z.x,y-z.y)<z.r+8))continue;mk('circle',{cx:x.toFixed(1),cy:y.toFixed(1),r:(2.2+rs()*2.4).toFixed(1),class:'tree faint'},T)}
+  const rw=rng(41),fl=ZONES[2];
+  for(let i=0;i<9;i++){const a=rw()*6.283,rr=Math.sqrt(rw())*(fl.r-14),x=fl.x+Math.cos(a)*rr-9,y=fl.y+Math.sin(a)*rr;mk('path',{d:`M${x.toFixed(1)} ${y.toFixed(1)}q4.5 -4 9 0t9 0`,class:'wave'},T)}
+  const pl=ZONES[0];
+  [[-30,-28,15,10],[17,-32,17,11],[-36,14,12,13],[22,20,16,10]].forEach(([dx,dy,w,h])=>mk('rect',{x:pl.x+dx,y:pl.y+dy,width:w,height:h,rx:2,class:'bld'},T));
+  mk('circle',{cx:pl.x,cy:pl.y,r:7,class:'fountain'},T);
+  const fo=ZONES[3];
+  mk('path',{d:`M${fo.x-12} ${fo.y+8}V${fo.y-4}h4.5v-5h4.5v5h6v-5h4.5v5H${fo.x+12}V${fo.y+8}Z`,class:'bld'},T);
+
+  const Z=mk('g',{class:'zone-layer'},svg);
+  ZONES.forEach(z=>{
+    mk('circle',{cx:z.x,cy:z.y,r:z.r,class:'zone '+(z.restricted?'r':'s'),'data-kind':'zone','data-id':z.id},Z);
+    if(z.restricted)mk('circle',{cx:z.x,cy:z.y,r:z.r-1,fill:`url(#hatch-${key})`,class:'hatch-fill'},Z);
+    const a=mk('text',{x:z.x,y:z.y-z.r-18,class:'zlabel'},Z);a.textContent=z.name;
+    const b=mk('text',{x:z.x,y:z.y-z.r-6,class:'zlabel sub '+(z.restricted?'r':'s')},Z);b.textContent=z.restricted?'Restricted zone':'Safe zone';
+  });
+  const U0=mk('g',{class:'unit-layer'},svg);
+  UNITS.forEach(u=>{mk('circle',{cx:u.home.x,cy:u.home.y,r:15,class:'base-ring'},U0);const t=mk('text',{x:u.home.x,y:u.home.y+29,class:'zlabel small'},U0);t.textContent=u.base});
+  if(!full)mk('polygon',{class:'route',points:ROUTE.pts.map(p=>p.x.toFixed(0)+','+p.y.toFixed(0)).join(' ')},svg);
+  const TR=mk('g',{class:'trail-layer'},svg);
+  const list=full?TOURISTS:[me];
+  list.forEach(t=>{m.trails[t.id]=mk('polyline',{class:'trail'+(t.me?' me':'')},TR)});
+  m.gLink=mk('g',{class:'unit-layer'},svg);
+  m.gT=mk('g',{class:'tourist-layer'},svg);
+  list.forEach(t=>{
+    const g=mk('g',{class:'t-marker'+(t.me?' me':''),'data-kind':'tourist','data-id':t.id},m.gT);
+    mk('circle',{r:17,fill:'transparent'},g);
+    mk('circle',{r:10,class:'pulse'},g);
+    mk('circle',{r:t.me?9.5:8,class:'t-dot'},g);
+    const l=mk('text',{x:14,y:4,class:'t-label'},g);l.textContent=full?t.name:'You';
+    m.markers[t.id]={g,cls:''};
+  });
+  m.gU=mk('g',{class:'unit-layer'},svg);
+  if(full){
+    UNITS.forEach(u=>{
+      const link=mk('line',{class:'link'},m.gLink);link.style.display='none';
+      const g=mk('g',{class:'unit','data-kind':'unit','data-id':u.id},m.gU);
+      mk('circle',{r:17,fill:'transparent'},g);
+      mk('rect',{x:-10,y:-10,width:20,height:20,rx:6,fill:u.color,class:'unit-box'},g);
+      const ic=mk('use',{x:-7,y:-7,width:14,height:14,style:'color:#fff'},g);ic.setAttribute('href','#'+u.icon);
+      m.units[u.id]={g,link,cls:''};
+    });
+    m.gP=mk('g',{},svg);
+    m.selG=mk('g',{},svg);mk('circle',{r:24,class:'sel-ring'},m.selG);m.selG.style.display='none';
+  }
+  return m;
+}
+const appMap=buildMap($('#map1'),false,'a');
+const dashMap=buildMap($('#map2'),true,'d');
+
+function updateMap(m,now,dt){
+  const list=m.full?TOURISTS:[me];
+  for(const t of list){
+    const k=m.markers[t.id],inc=activeInc(t.id);
+    k.g.setAttribute('transform',`translate(${t.x.toFixed(1)} ${t.y.toFixed(1)})`);
+    const cls='t-marker'+(t.me?' me':'')+(inc?(inc.status==='Open'?' bad':' warn'):'')+(now<t.alertUntil?' alerted':'');
+    if(k.cls!==cls){k.cls=cls;k.g.setAttribute('class',cls)}
+  }
+  if(!m.full)return;
+  for(const u of UNITS){
+    const k=m.units[u.id];
+    k.g.setAttribute('transform',`translate(${u.x.toFixed(1)} ${u.y.toFixed(1)})`);
+    const cls='unit'+((u.state==='enroute'||u.state==='returning')?' moving':'');
+    if(k.cls!==cls){k.cls=cls;k.g.setAttribute('class',cls)}
+    const inc=u.state==='enroute'&&incById(u.inc);
+    if(inc){const t=byId(inc.who);k.link.setAttribute('x1',u.x.toFixed(1));k.link.setAttribute('y1',u.y.toFixed(1));k.link.setAttribute('x2',t.x.toFixed(1));k.link.setAttribute('y2',t.y.toFixed(1));k.link.style.display=''}
+    else k.link.style.display='none';
+  }
+  for(let i=pulses.length-1;i>=0;i--){
+    const p=pulses[i],k=(now-p.t0)/1800;
+    if(k>=1){if(p.el)p.el.remove();pulses.splice(i,1);continue}
+    if(!p.el)p.el=mk('circle',{class:'bcast'},m.gP);
+    p.el.setAttribute('cx',p.x.toFixed(1));p.el.setAttribute('cy',p.y.toFixed(1));p.el.setAttribute('r',(k*BCAST_R).toFixed(1));p.el.style.opacity=(1-k).toFixed(2);
+  }
+  if(state.follow){
+    const t=byId(state.follow.id);
+    vt.x=clamp(t.x-vt.w/2,VX,VX+VW-vt.w);vt.y=clamp(t.y-vt.h/2,VY,VY+VH-vt.h);
+    m.selG.style.display='';m.selG.setAttribute('transform',`translate(${t.x.toFixed(1)} ${t.y.toFixed(1)})`);
+  }else m.selG.style.display='none';
+  const e=1-Math.exp(-dt*7);
+  view.x+=(vt.x-view.x)*e;view.y+=(vt.y-view.y)*e;view.w+=(vt.w-view.w)*e;view.h+=(vt.h-view.h)*e;
+  m.svg.setAttribute('viewBox',`${view.x.toFixed(2)} ${view.y.toFixed(2)} ${view.w.toFixed(2)} ${view.h.toFixed(2)}`);
+}
+function focusOn(x,y,w){const h=w*VH/VW;vt.w=w;vt.h=h;vt.x=clamp(x-w/2,VX,VX+VW-w);vt.y=clamp(y-h/2,VY,VY+VH-h)}
+function fitMap(){state.follow=null;vt.x=VX;vt.y=VY;vt.w=VW;vt.h=VH;syncRoster()}
+function sampleTrails(){
+  for(const t of TOURISTS){
+    const last=t.trail[t.trail.length-1];
+    if(!last||dist(last,t)>1.2){t.trail.push({x:t.x,y:t.y});if(t.trail.length>32)t.trail.shift()}
+    const pts=t.trail.map(p=>p.x.toFixed(0)+','+p.y.toFixed(0)).join(' ');
+    if(dashMap.trails[t.id])dashMap.trails[t.id].setAttribute('points',pts);
+    if(t.me)appMap.trails[t.id].setAttribute('points',pts);
+  }
+}
+
+/* ---------------- toasts and feeds ---------------- */
+function toast(msg,o={}){
+  const icon={danger:'i-alert',warn:'i-bell',ok:'i-check',info:'i-pin'}[o.kind||'info'];
+  const el=document.createElement('div');el.className='toast '+(o.kind||'info');
+  el.innerHTML=`<svg class="i"><use href="#${icon}"/></svg><span>${esc(msg)}</span>`;
+  if(o.action){const b=document.createElement('button');b.textContent=o.label||'Open';b.onclick=()=>{o.action();el.remove()};el.appendChild(b)}
+  const box=$('#toasts');box.appendChild(el);
+  while(box.children.length>3)box.firstChild.remove();
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),320)},o.action?6000:4200);
+}
+function pushFeed(sel,text,kind){
+  const ul=$(sel),li=document.createElement('li');li.className='k-'+(kind||'info');
+  li.innerHTML=`<i></i><div><span>${esc(text)}</span><time>${fmtClock(Date.now())}</time></div>`;
+  ul.prepend(li);while(ul.children.length>40)ul.lastChild.remove();
+}
+const logApp=(t,k)=>pushFeed('#appFeed',t,k);
+const logOps=(t,k)=>pushFeed('#opsFeed',t,k);
+
+/* ---------------- incidents ---------------- */
+function addEvent(inc,text){inc.events.push({t:Date.now(),text})}
+function createIncident(t,type){
+  const z=zoneAt(t);
+  const inc={id:'INC-'+(++seq),who:t.id,type,pr:PRIORITY[type],status:'Open',x:t.x,y:t.y,zone:z?z.name:'Open area',t:Date.now(),units:[],events:[],fresh:true};
+  addEvent(inc,DESC[type]);
+  incidents.unshift(inc);
+  setTimeout(()=>{inc.fresh=false;const li=$(`.inc[data-id="${inc.id}"]`);if(li)li.classList.remove('fresh')},1900);
+  logOps(`${inc.id} raised: ${type}, ${t.name} (${t.id})`,'danger');
+  renderAll();
+  if(state.tab!=='dash'&&type!=='SOS Alert'||t.id!==me.id&&state.tab!=='dash')toast(`${inc.id}: ${type} for ${t.name}`,{kind:'danger',label:'Open',action:()=>{show('dash');selectIncident(inc.id,true)}});
+  else if(state.tab==='dash')toast(`New incident ${inc.id}: ${type}, ${t.name}`,{kind:'danger',label:'Focus',action:()=>selectIncident(inc.id,true)});
+  return inc;
+}
+function setNum(el,v){
+  const from=+el.dataset.v||0;
+  if(el.dataset.v!==undefined&&from===v)return;
+  el.dataset.v=v;const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/450);el.textContent=Math.round(from+(v-from)*k);if(k<1)requestAnimationFrame(f)})(t0);
+}
+function renderKPIs(){
+  const c=counts();
+  setNum($('#k-people'),TOURISTS.length);setNum($('#k-Open'),c.Open);setNum($('#k-Responding'),c.Responding);setNum($('#k-Resolved'),c.Resolved);
+  const arr=incidents.filter(i=>i.arrived);
+  $('#k-avg').textContent=arr.length?fmtMS(arr.reduce((a,i)=>a+(i.arrived-i.t),0)/arr.length/1000):'-';
+  $$('.kpi[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k===state.filter));
+  const live=c.Open+c.Responding,pc=$('#pc-inc');pc.textContent=live;pc.classList.toggle('hot',c.Open>0);
+  $('#pc-tour').textContent=TOURISTS.length;
+  const bg=$('#badge');
+  if(String(c.Open)!==bg.dataset.n){bg.dataset.n=c.Open;bg.textContent=c.Open;bg.hidden=c.Open===0;bg.classList.remove('pop');void bg.offsetWidth;bg.classList.add('pop')}
+  const f=$('#filters');
+  $$('.flt',f).forEach(b=>{const k=b.dataset.f;b.setAttribute('aria-pressed',k===state.filter);b.querySelector('b').textContent=k==='all'?incidents.length:c[k]});
+}
+function pillHTML(inc){
+  const done=inc.status==='Resolved';
+  return `<button class="pill ${inc.status}" data-action="advance" ${done?'disabled':''} title="${done?'Resolved':inc.status==='Open'?'Acknowledge this incident':'Mark as resolved'}">${inc.status}</button>`;
+}
+function etaText(u,inc){
+  const t=byId(inc.who);
+  if(u.inc===inc.id)return u.state==='onscene'?'On scene':'ETA '+fmtMS(dist(u,t)*ETA_K);
+  if(u.state==='idle')return 'ETA '+fmtMS(dist(u,t)*ETA_K);
+  return '';
+}
+function detailHTML(inc){
+  const t=byId(inc.who),steps=['Open','Responding','Resolved'],idx=steps.indexOf(inc.status),done=inc.status==='Resolved';
+  let h=`<div class="inc-detail${state.justSel===inc.id?' enter':''}">`;
+  h+=`<dl class="meta"><div><dt>Tourist</dt><dd>${esc(t.name)}, ${t.id}</dd></div><div><dt>Priority</dt><dd>${inc.pr}</dd></div><div><dt>Raised in</dt><dd>${esc(inc.zone)}</dd></div><div><dt>Live position</dt><dd class="num" data-live="${t.id}">${gps(t)}</dd></div></dl>`;
+  h+=`<ol class="steps">${steps.map((s,i)=>`<li class="${i<idx?'done':i===idx?'cur':''}"><i></i>${s}</li>`).join('')}</ol>`;
+  if(!done){
+    h+=`<div class="sub-h">Send a response unit</div><div class="units">`;
+    h+=UNITS.map(u=>{
+      const mine=u.inc===inc.id,idle=u.state==='idle';
+      const lab=mine?(u.state==='onscene'?'On scene':'En route'):idle?'Available':u.state==='returning'?'Returning':'Busy';
+      const sug=SUGGEST[inc.type]===u.id&&idle?'<span class="sug">Suggested</span>':'';
+      return `<button class="unit-btn${mine?' mine':''}" data-action="dispatch" data-unit="${u.id}" style="--uc:${u.color}" ${(!idle||mine)?'disabled':''}>${sug}<span class="ui"><svg class="i"><use href="#${u.icon}"/></svg></span><b>${u.short}</b><small>${lab}</small><small data-eta="${u.id}|${inc.id}">${etaText(u,inc)}</small></button>`;
+    }).join('');
+    h+=`</div><div class="actions"><button class="btn" data-action="broadcast"><svg class="i"><use href="#i-bell"/></svg>Alert nearby</button><button class="btn" data-action="call"><svg class="i"><use href="#i-phone"/></svg>Call tourist</button><button class="btn solid" data-action="resolve"><svg class="i"><use href="#i-check"/></svg>Mark resolved</button></div>`;
+  }
+  h+=`<ul class="tl">${inc.events.map(e=>`<li>${esc(e.text)}<time>${fmtClock(e.t)}</time></li>`).join('')}</ul></div>`;
+  return h;
+}
+function rowHTML(inc){
+  const t=byId(inc.who),sel=state.sel===inc.id;
+  return `<li class="inc p-${inc.pr}${sel?' sel':''}${inc.fresh?' fresh':''}" data-id="${inc.id}"><div class="inc-head"><button class="inc-main" data-action="select" aria-expanded="${sel}"><b>${esc(inc.type)}<span>${inc.id}</span></b><small>${esc(t.name)} in ${esc(inc.zone)}, <time data-ago="${inc.t}">${ago(inc.t)}</time></small></button>${pillHTML(inc)}</div>${sel?detailHTML(inc):''}</li>`;
+}
+function renderList(){
+  const pane=$('#pane-inc'),st=pane.scrollTop;
+  const rows=incidents.filter(i=>state.filter==='all'||i.status===state.filter);
+  $('#incList').innerHTML=rows.map(rowHTML).join('');
+  state.justSel=null;
+  const em=$('#incEmpty');em.hidden=rows.length>0;
+  em.innerHTML=incidents.length===0?'<b>All quiet</b>No incidents yet. Press SOS in the Tourist App, start the auto walk into a red zone, or use Simulate incident.':`<b>Nothing here</b>No ${state.filter.toLowerCase()} incidents right now.`;
+  pane.scrollTop=st;
+}
+function renderAll(){renderKPIs();renderList()}
+
+function selectIncident(id,force){
+  const inc=incById(id);if(!inc)return;
+  if(state.filter!=='all'&&inc.status!==state.filter)state.filter='all';
+  if(state.sel===id&&!force){state.sel=null;fitMap()}
+  else{state.sel=id;state.justSel=id;state.follow={id:inc.who};focusOn(byId(inc.who).x,byId(inc.who).y,250)}
+  showPane('inc');renderAll();syncRoster();
+  const li=$(`.inc[data-id="${id}"]`);if(li&&state.sel===id)li.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function advance(inc){
+  if(inc.status==='Open'){inc.status='Responding';addEvent(inc,'Acknowledged by the control room');logOps(`${inc.id} acknowledged`,'warn');renderAll()}
+  else if(inc.status==='Responding')resolve(inc);
+}
+function dispatch(inc,uid){
+  const u=UNITS.find(x=>x.id===uid);
+  if(!u||u.state!=='idle'||inc.status==='Resolved')return;
+  u.state='enroute';u.inc=inc.id;inc.units.push(uid);
+  if(inc.status==='Open')inc.status='Responding';
+  const t=byId(inc.who);
+  addEvent(inc,`${u.label} dispatched, ETA ${fmtMS(dist(u,t)*ETA_K)}`);
+  logOps(`${u.label} sent to ${inc.id}`,'warn');
+  toast(`${u.label} is on the way to ${t.name}`,{kind:'warn'});
+  if(t.me)logApp(`Help is on the way: ${u.label}`,'ok');
+  renderAll();
+}
+function resolve(inc){
+  if(inc.status==='Resolved')return;
+  inc.status='Resolved';inc.done=Date.now();
+  addEvent(inc,`Marked resolved after ${fmtMS((inc.done-inc.t)/1000)}`);
+  UNITS.filter(u=>u.inc===inc.id).forEach(u=>{u.state='returning';u.inc=null});
+  logOps(`${inc.id} resolved`,'ok');
+  toast(`${inc.id} resolved`,{kind:'ok'});
+  if(inc.who===me.id)logApp('The control room marked your incident as resolved','ok');
+  renderAll();
+}
+function broadcast(inc){
+  const o=byId(inc.who);
+  const near=TOURISTS.filter(t=>t.id!==o.id&&dist(t,o)<BCAST_R);
+  const now=performance.now();
+  near.forEach(t=>t.alertUntil=now+5000);
+  pulses.push({x:o.x,y:o.y,t0:now,el:null});
+  addEvent(inc,`Safety alert sent to ${near.length} nearby tourist${near.length===1?'':'s'}`);
+  logOps(`Safety alert around ${inc.id}: ${near.length} tourist${near.length===1?'':'s'} reached`,'warn');
+  toast(near.length?`Alert sent to ${near.map(t=>t.name).join(', ')}`:'No other tourists within range',{kind:near.length?'warn':'info'});
+  if(near.includes(me)){logApp(`Authority alert: an incident was reported near you (${inc.zone}). Follow staff instructions.`,'warn')}
+  renderList();
+}
+function callTourist(inc){
+  const t=byId(inc.who);
+  addEvent(inc,`Control room calling ${t.name}`);
+  toast(`Calling ${t.name}`,{kind:'info'});
+  if(t.me)logApp('The control room is calling you','warn');
+  renderList();
+  setTimeout(()=>{
+    addEvent(inc,t.battery<25?`Call dropped, ${t.name}'s phone battery is low`:`Call connected, ${t.name} confirmed their position`);
+    toast(t.battery<25?`${t.name}'s phone battery is too low, call dropped`:`${t.name} picked up`,{kind:t.battery<25?'warn':'ok'});
+    renderList();
+  },1800);
+}
+function simulate(){
+  const pool=TOURISTS.filter(t=>!t.me&&!activeInc(t.id));
+  if(!pool.length){toast('Every other tourist already has an active incident',{kind:'info'});return}
+  const t=pool[Math.floor(Math.random()*pool.length)];
+  const type=['Medical Emergency','SOS Alert','No Movement'][Math.floor(Math.random()*3)];
+  const inc=createIncident(t,type);
+  selectIncident(inc.id,true);
+}
+
+/* ---------------- tourist app ---------------- */
+function updateStatus(){
+  const z=state.zone,el=$('#status');
+  let s='neutral',t='Location sharing is on',d='You are outside the marked zones.',ic='#i-pin';
+  if(z&&z.restricted){s='warn';t='Restricted zone: '+z.name;d='Please turn back. The control room has been told.';ic='#i-alert'}
+  else if(z){s='safe';t='You are in a safe zone: '+z.name;d=z.note;ic='#i-check'}
+  el.dataset.s=s;$('#statusT').textContent=t;$('#statusS').textContent=d;$('#statusIco').setAttribute('href',ic);
+}
+function alarm(){const c=$('#stage1');c.classList.remove('alarm');void c.offsetWidth;c.classList.add('alarm')}
+function checkMe(){
+  const z=zoneAt(me);if(z===state.zone)return;
+  const prev=state.zone;state.zone=z;updateStatus();
+  if(z&&z.restricted){
+    logApp(`Geo-fence breach: ${z.name}`,'danger');
+    const open=incidents.some(i=>i.who===me.id&&i.type==='Zone Breach'&&i.zone===z.name&&i.status!=='Resolved');
+    if(!open){createIncident(me,'Zone Breach');logApp('Breach reported to the authorities','warn')}
+    alarm();
+  }else if(z)logApp(`Entered ${z.name}, a safe zone`,'ok');
+  else if(prev)logApp(`Left ${prev.name}`,'info');
+}
+function setWalking(on,quiet){
+  state.walking=on;const b=$('#walk');
+  b.setAttribute('aria-pressed',on);b.classList.remove('hint');
+  $('#walkTxt').textContent=on?'Stop walking':'Start auto walk';
+  $('#walkIc').setAttribute('href',on?'#i-pause':'#i-play');
+  if(!quiet)logApp(on?'Auto walk started':'Auto walk stopped','info');
+}
+function updateSide(){
+  const z=state.zone,lv=z?(z.restricted?3:1):2;
+  $('#risk').dataset.lv=lv;$('#riskTxt').textContent=z?(z.restricted?'High':'Low'):'Moderate';
+  let best=UNITS[0];UNITS.forEach(u=>{if(dist(me,u.home)<dist(me,best.home))best=u});
+  $('#help').textContent=`${best.base}, ${fmtDist(dist(me,best.home))}`;
+  $('#walked').textContent=fmtDist(state.dist);
+  $('#batt').textContent=Math.round(me.battery)+'%';
+}
+function sos(){
+  let inc=incidents.find(i=>i.who===me.id&&i.type==='SOS Alert'&&i.status!=='Resolved'),fresh=false;
+  if(!inc){inc=createIncident(me,'SOS Alert');fresh=true}
+  logApp(fresh?'SOS sent with your live location':'SOS is already active, help is on the way','danger');
+  $('#sosT').textContent=fresh?'SOS sent':'SOS already active';
+  $('#sosMsg').innerHTML=fresh?`Incident <b>${inc.id}</b> was raised from <b class="num">${gps(me)}</b>.`:`Incident <b>${inc.id}</b> is still open. The control room can see your live position.`;
+  $('#sosGo').onclick=()=>{$('#sosDlg').close();show('dash');selectIncident(inc.id,true)};
+  const d=$('#sosDlg');if(typeof d.showModal==='function')d.showModal();else d.setAttribute('open','');
+}
+
+/* ---------------- simulation step ---------------- */
+function stepOthers(dt){
+  for(const t of TOURISTS){
+    if(t.me||activeInc(t.id))continue;
+    if(Math.random()<dt*.35){const a=(Math.random()-.5)*1.2,c=Math.cos(a),s=Math.sin(a);const vx=t.vx*c-t.vy*s;t.vy=t.vx*s+t.vy*c;t.vx=vx}
+    let nx=t.x+t.vx*dt,ny=t.y+t.vy*dt;
+    if(nx<24||nx>W-24){t.vx*=-1;nx=t.x}
+    if(ny<24||ny>H-24){t.vy*=-1;ny=t.y}
+    const bad=ZONES.find(z=>z.restricted&&Math.hypot(nx-z.x,ny-z.y)<z.r+12);
+    if(bad){
+      const ax=t.x-bad.x,ay=t.y-bad.y,m=Math.hypot(ax,ay)||1,sp=Math.hypot(t.vx,t.vy),a=(Math.random()-.5)*.8,dx=ax/m,dy=ay/m;
+      t.vx=sp*(dx*Math.cos(a)-dy*Math.sin(a));t.vy=sp*(dx*Math.sin(a)+dy*Math.cos(a));nx=t.x;ny=t.y;
+    }
+    t.x=nx;t.y=ny;
+  }
+}
+function moveTo(o,t,step){const d=dist(o,t);if(d<=step){o.x=t.x;o.y=t.y}else{o.x+=(t.x-o.x)/d*step;o.y+=(t.y-o.y)/d*step}}
+function stepUnits(dt){
+  for(const u of UNITS){
+    if(u.state==='enroute'){
+      const inc=incById(u.inc);if(!inc){u.state='returning';continue}
+      const t=byId(inc.who);moveTo(u,t,UNIT_SPEED*dt);
+      if(dist(u,t)<12){
+        u.state='onscene';if(!inc.arrived)inc.arrived=Date.now();
+        addEvent(inc,`${u.label} arrived on scene`);
+        logOps(`${u.label} on scene at ${inc.id}`,'ok');
+        toast(`${u.label} reached ${t.name}`,{kind:'ok'});
+        if(t.me)logApp(`${u.label} has reached you`,'ok');
+        renderAll();
+      }
+    }else if(u.state==='onscene'){
+      const inc=incById(u.inc),t=inc&&byId(inc.who);
+      if(t){const k=Math.min(1,dt*6);u.x+=(t.x+14-u.x)*k;u.y+=(t.y+12-u.y)*k}
+    }else if(u.state==='returning'){
+      moveTo(u,u.home,UNIT_SPEED*dt);
+      if(dist(u,u.home)<2){u.x=u.home.x;u.y=u.home.y;u.state='idle';renderList()}
+    }
+  }
+}
+
+/* ---------------- dashboard UI ---------------- */
+function showPane(p){
+  state.pane=p;
+  $$('.ptab').forEach(b=>b.setAttribute('aria-selected',b.dataset.p===p));
+  ['inc','tour','feed'].forEach(k=>$('#pane-'+k).hidden=k!==p);
+}
+function buildRoster(){
+  $('#roster').innerHTML=TOURISTS.map((t,i)=>`<li><button class="r-row" data-id="${t.id}"><span class="av" style="--av:${AVC[i%AVC.length]}" data-st="ok">${t.name[0]}</span><span class="r-main"><b>${esc(t.name)}${t.me?' (demo user)':''}</b><small data-z>Tourist Plaza</small></span><span class="r-end"><span data-b>86%</span><span class="bat"><i></i></span></span></button></li>`).join('');
+}
+function syncRoster(){$$('#roster .r-row').forEach(b=>b.classList.toggle('sel',!!state.follow&&state.follow.id===b.dataset.id))}
+function updateRoster(){
+  $$('#roster .r-row').forEach(b=>{
+    const t=byId(b.dataset.id),z=zoneAt(t),inc=activeInc(t.id),bat=Math.round(t.battery);
+    b.querySelector('[data-z]').textContent=(z?z.name:'Open area')+(z&&z.restricted?', restricted':'')+(inc?`, ${inc.type}`:'');
+    b.querySelector('[data-b]').textContent=bat+'%';
+    const bi=b.querySelector('.bat');bi.classList.toggle('low',bat<25);bi.firstElementChild.style.width=bat+'%';
+    b.querySelector('.av').dataset.st=inc?(inc.status==='Open'?'bad':'warn'):'ok';
+  });
+}
+function pickTourist(id){
+  const t=byId(id),inc=activeInc(id);
+  state.follow={id};focusOn(t.x,t.y,250);
+  if(inc){state.sel=inc.id;state.justSel=inc.id;if(state.filter!=='all'&&inc.status!==state.filter)state.filter='all';showPane('inc');renderAll()}
+  else{state.sel=null;renderList()}
+  syncRoster();
+}
+function updateEtas(){
+  $$('[data-eta]').forEach(el=>{
+    const [uid,iid]=el.dataset.eta.split('|'),u=UNITS.find(x=>x.id===uid),inc=incById(iid);
+    if(u&&inc)el.textContent=etaText(u,inc);
+  });
+}
+function resetDemo(){
+  setWalking(false,true);
+  incidents.length=0;seq=1040;state.sel=null;state.filter='all';
+  UNITS.forEach(u=>{u.x=u.home.x;u.y=u.home.y;u.state='idle';u.inc=null});
+  pulses.forEach(p=>p.el&&p.el.remove());pulses.length=0;
+  state.walkS=0;const p=routeAt(0);me.x=p.x;me.y=p.y;state.dist=0;state.zone=null;
+  TOURISTS.forEach(t=>{t.alertUntil=0;t.trail.length=0});
+  $('#appFeed').innerHTML='';$('#opsFeed').innerHTML='';
+  logApp('Demo reset, live location sharing started','info');logOps('Control room online, monitoring '+TOURISTS.length+' tourists','info');
+  fitMap();checkMe();renderAll();updateSide();
+  toast('Demo reset',{kind:'info'});
+}
+
+/* ---------------- tooltip ---------------- */
+const tip=$('#tip'),stage2=$('#stage2');
+function tipFor(kind,id,e){
+  let h='';
+  if(kind==='tourist'){
+    const t=byId(id),z=zoneAt(t),inc=activeInc(id);
+    h=`<b>${esc(t.name)}, ${t.id}</b><small>${z?esc(z.name)+(z.restricted?' (restricted)':''):'Open area'}</small><small>Battery ${Math.round(t.battery)}%</small>`+(inc?`<small class="hot">${inc.id}: ${esc(inc.type)}, ${inc.status}</small>`:'<small>No active incident</small>');
+  }else if(kind==='unit'){
+    const u=UNITS.find(x=>x.id===id),inc=u.inc&&incById(u.inc);
+    const st=u.state==='idle'?'Available at '+u.base:u.state==='enroute'?'En route to '+inc.id:u.state==='onscene'?'On scene at '+inc.id:'Returning to '+u.base;
+    h=`<b>${u.label}</b><small>${st}</small>`+(u.state==='enroute'?`<small>ETA ${fmtMS(dist(u,byId(inc.who))*ETA_K)}</small>`:'');
+  }else{
+    const z=ZONES.find(x=>x.id===id),n=TOURISTS.filter(t=>Math.hypot(t.x-z.x,t.y-z.y)<=z.r);
+    h=`<b>${z.name}</b><small>${z.restricted?'Restricted zone':'Safe zone'}</small><small>${esc(z.note)}</small><small>${n.length?n.map(t=>esc(t.name)).join(', ')+' inside':'Nobody inside right now'}</small>`;
+  }
+  tip.innerHTML=h;
+  const r=stage2.getBoundingClientRect();
+  let x=e.clientX-r.left+16,y=e.clientY-r.top+16;
+  if(x+tip.offsetWidth>r.width-8)x=e.clientX-r.left-tip.offsetWidth-16;
+  if(y+tip.offsetHeight>r.height-8)y=e.clientY-r.top-tip.offsetHeight-16;
+  tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px';tip.classList.add('on');
+}
+let tipTimer=0;
+$('#map2').addEventListener('pointermove',e=>{
+  const n=e.target.closest('[data-kind]');
+  if(!n){tip.classList.remove('on');return}
+  tipFor(n.dataset.kind,n.dataset.id,e);
+});
+$('#map2').addEventListener('pointerleave',()=>tip.classList.remove('on'));
+$('#map2').addEventListener('click',e=>{
+  const n=e.target.closest('[data-kind]');if(!n)return;
+  const k=n.dataset.kind,id=n.dataset.id;
+  if(e.pointerType==='touch'||e.detail===0){tipFor(k,id,e);clearTimeout(tipTimer);tipTimer=setTimeout(()=>tip.classList.remove('on'),2600)}
+  if(k==='tourist')pickTourist(id);
+  else if(k==='unit'){const u=UNITS.find(x=>x.id===id);if(u.inc)selectIncident(u.inc,true)}
+  else{const z=ZONES.find(x=>x.id===id);state.follow=null;focusOn(z.x,z.y,z.r*3.6);syncRoster()}
+});
+$('#map2').addEventListener('dblclick',fitMap);
+
+/* ---------------- wiring ---------------- */
+$('#incList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-action]');if(!b)return;
+  const li=b.closest('.inc'),inc=incById(li.dataset.id);if(!inc)return;
+  const a=b.dataset.action;
+  if(a==='select')selectIncident(inc.id);
+  else if(a==='advance')advance(inc);
+  else if(a==='dispatch')dispatch(inc,b.dataset.unit);
+  else if(a==='broadcast')broadcast(inc);
+  else if(a==='call')callTourist(inc);
+  else if(a==='resolve')resolve(inc);
+});
+$('#filters').addEventListener('click',e=>{const b=e.target.closest('.flt');if(!b)return;state.filter=b.dataset.f;renderAll()});
+$('#kpis').addEventListener('click',e=>{
+  const b=e.target.closest('.kpi[data-k]');if(!b)return;
+  if(b.dataset.k==='people'){showPane('tour');return}
+  state.filter=state.filter===b.dataset.k?'all':b.dataset.k;showPane('inc');renderAll();
+});
+$$('.ptab').forEach(b=>b.addEventListener('click',()=>showPane(b.dataset.p)));
+$('#roster').addEventListener('click',e=>{const b=e.target.closest('.r-row');if(b)pickTourist(b.dataset.id)});
+$$('.lay[data-l]').forEach(b=>b.addEventListener('click',()=>{
+  const on=b.getAttribute('aria-pressed')!=='true';
+  b.setAttribute('aria-pressed',on);$('#map2').classList.toggle('no-'+b.dataset.l,!on);
+}));
+$('#resetView').addEventListener('click',fitMap);
+$('#simBtn').addEventListener('click',simulate);
+$('#resetDemo').addEventListener('click',resetDemo);
+$('#walk').addEventListener('click',()=>setWalking(!state.walking));
+$('#sosBtn').addEventListener('click',sos);
+$('#sosClose').addEventListener('click',()=>$('#sosDlg').close());
+$('#sosDlg').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+
+function placePill(){
+  const b=$('.tab[aria-selected=true]'),p=$('.tab-pill');
+  p.style.width=b.offsetWidth+'px';p.style.transform=`translateX(${b.offsetLeft}px)`;
+}
+function show(tab){
+  state.tab=tab;
+  $('#view-app').hidden=tab!=='app';$('#view-dash').hidden=tab!=='dash';
+  $('#tab-app').setAttribute('aria-selected',tab==='app');$('#tab-dash').setAttribute('aria-selected',tab==='dash');
+  placePill();
+  try{history.replaceState(null,'',tab==='dash'?'#dashboard':'#app')}catch(e){}
+  window.scrollTo(0,0);
+}
+$('#tab-app').addEventListener('click',()=>show('app'));
+$('#tab-dash').addEventListener('click',()=>show('dash'));
+addEventListener('resize',placePill);
+addEventListener('load',placePill);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(placePill);
+
+/* ---------------- main loop ---------------- */
+let last=performance.now(),a1=0,a4=0,aT=0;
+function tick4(){
+  updateSide();updateEtas();
+  $$('[data-live]').forEach(el=>{const t=byId(el.dataset.live);if(t)el.textContent=gps(t)});
+}
+function tick1(){
+  $('#clock').textContent=fmtClock(Date.now());
+  $$('[data-ago]').forEach(el=>el.textContent=ago(+el.dataset.ago));
+  updateRoster();
+}
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(state.walking){
+    state.walkS+=WALK_SPEED*dt;const p=routeAt(state.walkS);
+    state.dist+=dist(me,p);me.x=p.x;me.y=p.y;
+  }
+  stepOthers(dt);stepUnits(dt);
+  TOURISTS.forEach(t=>{t.battery=Math.max(3,t.battery-dt*(t.me?.012:.006))});
+  checkMe();
+  aT+=dt;if(aT>.25){aT=0;sampleTrails()}
+  a4+=dt;if(a4>.25){a4=0;tick4()}
+  a1+=dt;if(a1>=1){a1=0;tick1()}
+  updateMap(state.tab==='app'?appMap:dashMap,now,dt);
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- boot ---------------- */
+buildRoster();
+logApp('Tourist registered, live location sharing started','info');
+logOps('Control room online, monitoring '+TOURISTS.length+' tourists','info');
+checkMe();updateStatus();updateSide();renderAll();tick1();sampleTrails();
+if(location.hash==='#dashboard')show('dash');else show('app');
+requestAnimationFrame(frame);
+
+/* small hook so the page can be exercised from tests */
+window.__demo={state,incidents,UNITS,TOURISTS,sos,simulate,setWalking,show,selectIncident,dispatch,resolve,broadcast,resetDemo,me};
+})();
+</script>
+</body>
+</html>
